@@ -50,7 +50,7 @@ class MaskInterface:
                                        model_dir="./logs")
         self.model.load_weights(coco_path, by_name=True)
 
-    def get_contours(boxes, masks, class_ids):
+    def get_contours(self, boxes, masks, class_ids):
         """Find contours using MaskRCNN.
 
         boxes: [num_instance, (y1, x1, y2, x2, class_id)] in image coordinates.
@@ -72,7 +72,7 @@ class MaskInterface:
             contours = find_contours(padded_mask, 0.5)
             # Subtract the padding and flip (y, x) to (x, y)
             contours = [np.fliplr(verts) - 1 for verts in contours]
-            all_contours.append(contours)
+            all_contours.append(contours[0])
         return all_contours
 
     def segment_image(self, abs_image_path):

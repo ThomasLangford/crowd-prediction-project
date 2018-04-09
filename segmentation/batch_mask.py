@@ -48,7 +48,6 @@ config = InferenceConfig()
 
 # Create model object in inference mode.
 model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
-model2 = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
 
 # Load weights trained on MS-COCO
 model.load_weights(COCO_MODEL_PATH, by_name=True)
@@ -104,7 +103,7 @@ def massImageMask(inputParentFolder, outputParentFolder):
 
             out_name = os.path.splitext(imageName)[0]
             out_path = os.path.join(output_folder, out_name)
-            # skimage.io.imsave(out_path+".jpg", mask)
+            skimage.io.imsave(out_path+".jpg", mask)
             print(out_name)
 
         print("Folder: "+subdir)
