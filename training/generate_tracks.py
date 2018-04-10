@@ -26,10 +26,8 @@ def tracking(image_path_list, abs_file_name, segmentor):
 
     args:
         todo
-    returns:
-        None
+    returns
     """
-    segmentor = MaskInterface()
     tracker = Tracker(10, 0, 0)
     count = 0
     for image_path in image_path_list:
