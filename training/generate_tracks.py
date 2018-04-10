@@ -56,8 +56,10 @@ def tracking(image_path_list, abs_file_name, segmentor):
         for j in range(len(tracker.track_history[i].center_history)):
             coords = []
             # x and y are flipped becuase of graphics geometry.
-            coords.append(tracker.track_history[i].center_history[j][1][0])
-            coords.append(tracker.track_history[i].center_history[j][0][0])
+            coords.append(
+                        int(tracker.track_history[i].center_history[j][0][0]))
+            coords.append(
+                        int(tracker.track_history[i].center_history[j][0][1]))
             history.append(coords)
         to_save[i][0] = tracker.track_history[i].frame_count
         to_save[i][1] = history
