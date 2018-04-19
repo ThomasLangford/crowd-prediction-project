@@ -33,7 +33,7 @@ class Track(object):
         self.track_id = trackIdCount
         self.KF = KalmanFilter()
         self.prediction = np.asarray(prediction)
-        self.prediction = prediction
+        # self.prediction = prediction
         # Apply the prediction ten times to center the initial position
         # on the centroid.
         for _ in range(10):
@@ -51,7 +51,7 @@ class Tracker(object):
 
     """
 
-    def __init__(self, dist_thresh, max_frames_to_skip, trackIdCount):
+    def __init__(self, dist_thresh, max_frames_to_skip):
         """Initialize variable used by Tracker class.
 
         Args:
@@ -59,18 +59,19 @@ class Tracker(object):
                          track will be deleted and new track is created
             max_frames_to_skip: maximum allowed frames to be skipped for
                                 the track object undetected
-            trackIdCount: identification of each track object
         Return:
             None
         """
         self.dist_thresh = dist_thresh
         self.max_frames_to_skip = max_frames_to_skip
         self.tracks = []
-        self.trackIdCount = trackIdCount
+        self.trackIdCount = 0
         self.track_history = []
 
     def Update(self, detections):
-        """Update tracks vector using following steps:
+        """Update tracks.
+
+        Update tracks vector using following steps:
             - Create tracks if no tracks vector found
             - Calculate cost using sum of square distance
               between predicted vs detected centroids
@@ -87,7 +88,6 @@ class Tracker(object):
         Return:
             None
         """
-
         # Create tracks if no tracks vector found
         if (len(self.tracks) == 0):
             for i in range(len(detections)):
@@ -173,10 +173,14 @@ class Tracker(object):
                 self.tracks[i].skipped_frames = 0
                 self.tracks[i].prediction = self.tracks[i].KF.correct(
                                             detections[assignment[i]], 1)
+                self.tracks[i].center_history.append(
+                    [detections[assignment[i]]])
             else:
                 self.tracks[i].prediction = self.tracks[i].KF.correct(
                                             np.array([[0], [0]]), 0)
+                self.tracks[i].center_history.append(
+                    self.tracks[i].KF.lastResult)
 
             # Add posiition to history
-            self.tracks[i].center_history.append(self.tracks[i].KF.lastResult)
+            # self.tracks[i].center_history.append(self.tracks[i].KF.lastResult)
             self.tracks[i].frame_count += 1

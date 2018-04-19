@@ -28,7 +28,7 @@ def tracking(image_path_list, abs_file_name, segmentor):
         todo
     returns
     """
-    tracker = Tracker(10, 0, 0)
+    tracker = Tracker(10, 0)
     count = 0
     for image_path in image_path_list:
         centers = []
