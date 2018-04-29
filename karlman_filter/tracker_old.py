@@ -10,6 +10,7 @@
 # Import python libraries
 import numpy as np
 from .kalman_filter import KalmanFilter
+from math import hypot
 # from common import dprint
 from scipy.optimize import linear_sum_assignment
 
@@ -104,7 +105,7 @@ class Tracker(object):
                     distance = np.sqrt(diff[0][0]*diff[0][0] +
                                        diff[1][0]*diff[1][0])
                     cost[i][j] = distance
-                except:
+                except Exception:
                     print("Err!")
                     pass
 
@@ -125,7 +126,14 @@ class Tracker(object):
             if (assignment[i] != -1):
                 # check for cost distance threshold.
                 # If cost is very high then un_assign (delete) the track
-                if (cost[i][assignment[i]] > self.dist_thresh):
+                track = self.tracks[i]
+                if len(track.center_history) > 1:
+                    coords = track.center_history[-1][0]
+                    dist = hypot(detections[assignment[i]][0] - coords[0], detections[assignment[i]][1] - coords[1])
+                else:
+                    dist = -1
+
+                if cost[i][assignment[i]] > self.dist_thresh or dist > 5:
                     assignment[i] = -1
                     un_assigned_tracks.append(i)
                     self.tracks[i].skipped_frames += 1
@@ -158,14 +166,16 @@ class Tracker(object):
                 if i not in del_tracks:
                     copy_tracks.append(self.tracks[i])
             self.tracks = copy_tracks
-            print("After tracks len ", len(self.tracks))
-            print("Before ass len ", len(self.tracks))
             copy_ass = []
             for i in range(len(assignment)):
                 if i not in del_tracks:
                     copy_ass.append(assignment[i])
             assignment = copy_ass
-            print("After tracks len ", len(self.tracks))
+            copy_unass = []
+            for i in range(len(un_assigned_tracks)):
+                if i not in del_tracks:
+                    copy_unass.append(un_assigned_tracks[i])
+            un_assigned_tracks = copy_unass
 
         # Now look for un_assigned detects
         un_assigned_detects = []
@@ -174,12 +184,12 @@ class Tracker(object):
                     un_assigned_detects.append(i)
 
         # Start new tracks
-        if(len(un_assigned_detects) != 0):
+        if len(un_assigned_detects) != 0 and len(un_assigned_tracks) == 0:
             for i in range(len(un_assigned_detects)):
                 track = Track(detections[un_assigned_detects[i]],
                               self.trackIdCount)
                 track.center = detections[un_assigned_detects[i]]
-                track.center_history.append(track.prediction)
+                track.center_history.append([detections[un_assigned_detects[i]]])
                 track.frame_count += 1
                 self.trackIdCount += 1
                 self.tracks.append(track)
@@ -194,14 +204,14 @@ class Tracker(object):
                 self.tracks[i].prediction = self.tracks[i].KF.correct(
                                             detections[assignment[i]], 1)
                 self.tracks[i].center = detections[assignment[i]]
+                self.tracks[i].center_history.append([detections[assignment[i]]])
             else:
                 self.tracks[i].prediction = self.tracks[i].KF.correct(
                                             np.array([[0], [0]]), 0)
                 self.tracks[i].center = self.tracks[i].prediction[0]
-
+                self.tracks[i].center_history.append(self.tracks[i].prediction)
             self.tracks[i].KF.lastResult = self.tracks[i].prediction
             # add posiition to history
-            self.tracks[i].center_history.append(self.tracks[i].prediction)
 
             self.tracks[i].frame_count += 1
 

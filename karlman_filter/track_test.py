@@ -7,7 +7,9 @@ import numpy as np
 
 # IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf4_33_014.y"
 # IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf6_33_018.y"
-IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf1_33_000.y"
+# vidf2_33_005.y
+# IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf2_33_005.y"
+IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf1_33_001.y"
 
 def get_jpg_list(location):
     """DocString."""
@@ -20,7 +22,7 @@ def get_jpg_list(location):
 
 def test():
     # tracker = Tracker(10, 0)
-    tracker = Tracker(10, 5, 0)
+    tracker = Tracker(5, 2, 0)
     segmentor = MaskInterface()
     # path = "C:/Users/Nedsh/Documents/CS/Project/Production/karlman_filter/vidf1_33_000_f001.jpg"
     # img = cv2.imread(path)
@@ -65,7 +67,7 @@ def test():
             cv2.polylines(img2, [cnt], True, (0,255,255))
             _, radius = cv2.minEnclosingCircle(cnt)
 
-            if radius < 8 or radius > 20:
+            if radius < 4 or radius > 20:
                 continue
 
             x_list = [vertex[0] for vertex in contour]
@@ -102,6 +104,12 @@ def test():
             cv2.circle(img2, (int(track.center[0]),
                        int(track.center[1])), 1,
                        track.color, -1)
+            if len(track.center_history) > 1:
+                for i in range(len(track.center_history) - 1):
+                    cv2.line(img2, (int(track.center_history[i][0][0]),
+                             int(track.center_history[i][0][1])),
+                             (int(track.center_history[i+1][0][0]),
+                             int(track.center_history[i+1][0][1])), track.color, 1)
 
         # cv2.imshow("Image 1", img)
         cv2.imshow("Image 2", img2)

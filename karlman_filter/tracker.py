@@ -100,7 +100,7 @@ class Tracker(object):
                 # If cost is very high then un_assign (delete) the track
                 if (cost[i][assignment[i]] > self.dist_thresh):
                     assignment[i] = -1
-                    
+                    self.tracks[i].skipped_frames += 1
                     un_assigned_tracks.append(i)
                 pass
             else:
