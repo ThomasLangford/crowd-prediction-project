@@ -10,7 +10,7 @@ from .training_utilities import get_jpg_list
 
 
 INPUT_PATH = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/mask_ucsdpeds"
-OUTPUT_PATH = "C:/Users/Nedsh/Documents/CS/Project/DatasetLabelled/online_track_positions"
+OUTPUT_PATH = "C:/Users/Nedsh/Documents/CS/Project/DatasetLabelled/position_contours"
 
 
 def tracking(image_path_list, abs_file_name, segmentor):
@@ -20,41 +20,14 @@ def tracking(image_path_list, abs_file_name, segmentor):
         todo
     returns
     """
-    tracker = Tracker(10, 0)
+    cont_list = []
     count = 0
     for image_path in image_path_list:
-        centers = []
-        x_list = []
-        y_list = []
-
         contours = segmentor.segment_image(image_path)
-        for contour in contours:
-            # Find center of mass of contours
-            x_list = [vertex[0] for vertex in contour]
-            y_list = [vertex[1] for vertex in contour]
-            n_vertex = len(contour)
-            x = int(sum(x_list) / n_vertex)
-            y = int(sum(y_list) / n_vertex)
-            centers.append([x, y])
-
-        if (len(centers) > 0):
-            tracker.Update(centers)
+        cont_list.append(contours)
         print(count)
         count += 1
-
-    to_save = np.zeros((len(tracker.track_history), 2), dtype=object)
-    for i in range(len(tracker.track_history)):
-        history = []
-        for j in range(len(tracker.track_history[i].center_history)):
-            coords = []
-            # x and y are flipped becuase of graphics geometry.
-            coords.append(
-                        int(tracker.track_history[i].center_history[j][0][0]))
-            coords.append(
-                        int(tracker.track_history[i].center_history[j][0][1]))
-            history.append(coords)
-        to_save[i][0] = tracker.track_history[i].frame_count
-        to_save[i][1] = history
+    to_save = np.asarray(cont_list)
     np.save(abs_file_name, to_save)
 
 

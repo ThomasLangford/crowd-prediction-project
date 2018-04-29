@@ -1,5 +1,6 @@
+"""Sample tests."""
 # from segmentation import batch_mask
-# IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg"
+IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf1_33_000.y"
 # OUT_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/mask_ucsdpeds"
 # batch_mask.massImageMask(IN_DIR, OUT_DIR)
 
@@ -7,3 +8,7 @@
 
 from karlman_filter.track_test import test
 test()
+
+# from visualisation.online import online
+#
+# online(IN_DIR, 2, 3, 5, 10)
