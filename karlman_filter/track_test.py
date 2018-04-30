@@ -9,7 +9,10 @@ import numpy as np
 # IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf6_33_018.y"
 # vidf2_33_005.y
 # IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf2_33_005.y"
-IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf1_33_001.y"
+# IN_DIR = "C:/Users/Nedsh/Documents/CS/Project/DatasetRaw/ucsdpeds/vidf_jpg/vidf1_33_000.y"
+
+IN_DIR = "./example/raw"
+
 
 def get_jpg_list(location):
     """DocString."""
@@ -67,7 +70,8 @@ def test():
             cv2.polylines(img2, [cnt], True, (0,255,255))
             _, radius = cv2.minEnclosingCircle(cnt)
 
-            if radius < 4 or radius > 20:
+            # if radius < 10 or radius > 30:
+            if radius < 8 or radius > 30:
                 continue
 
             x_list = [vertex[0] for vertex in contour]
@@ -111,10 +115,37 @@ def test():
                              (int(track.center_history[i+1][0][0]),
                              int(track.center_history[i+1][0][1])), track.color, 1)
 
+            if len(track.center_history) > 8:
+                t_list = track.center_history[-8:]
+                count = 0
+                avg_diff_x = 0
+                avg_diff_y = 0
+                for i in range(len(t_list) - 1):
+                    a = t_list[i][0]
+                    b = t_list[i+1][0]
+                    avg_diff_x += b[0] - a[0]
+                    avg_diff_y += b[1] - a[1]
+                    count += 1
+                avg_diff_x = avg_diff_x/count
+                avg_diff_y = avg_diff_y/count
+                pos_list = []
+                for i in range(10):
+                    diff_x = (i+1) * avg_diff_x
+                    diff_y = (i+1) * avg_diff_y
+                    new_x = diff_x + t_list[-1][0][0]
+                    new_y = diff_y + t_list[-1][0][1]
+                    pos_list.append([new_x, new_y])
+                for i in range(len(pos_list) - 1):
+                    cv2.line(img2, (int(pos_list[i][0]),
+                             int(pos_list[i][1])),
+                             (int(pos_list[i+1][0]),
+                             int(pos_list[i+1][1])), (0, 0, 255), 1)
+
         # cv2.imshow("Image 1", img)
         cv2.imshow("Image 2", img2)
         k = cv2.waitKey(1) & 0xff
         if k == 27:
+            cv2.destroyAllWindows()
             break
         # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        #

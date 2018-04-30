@@ -11,7 +11,6 @@
 import numpy as np
 from .kalman_filter import KalmanFilter
 from math import hypot
-# from common import dprint
 from scipy.optimize import linear_sum_assignment
 
 
@@ -41,6 +40,13 @@ class Track(object):
         self.center_history = []
         self.color = list(np.random.random(size=3) * 256)
 
+        # Set prediction and display variables
+        self.frame_count = 0
+        self.center_history = []
+        self.prediction_buffer = []
+        self.prediction_list = []
+        self.prediction_count = 0
+
 
 class Tracker(object):
     """Tracker class that updates track vectors of object tracked
@@ -48,7 +54,7 @@ class Tracker(object):
         None
     """
 
-    def __init__(self, dist_thresh, max_frames_to_skip, trackIdCount):
+    def __init__(self, dist_thresh, max_frames_to_skip, trackIdCount=0):
         """Initialize variable used by Tracker class
         Args:
             dist_thresh: distance threshold. When exceeds the threshold,
@@ -106,7 +112,6 @@ class Tracker(object):
                                        diff[1][0]*diff[1][0])
                     cost[i][j] = distance
                 except Exception:
-                    print("Err!")
                     pass
 
         # Let's average the squared ERROR
@@ -133,7 +138,8 @@ class Tracker(object):
                 else:
                     dist = -1
 
-                if cost[i][assignment[i]] > self.dist_thresh or dist > 5:
+                if cost[i][assignment[i]] > self.dist_thresh or dist > 10:
+                # if cost[i][assignment[i]] > self.dist_thresh or dist > 20:
                     assignment[i] = -1
                     un_assigned_tracks.append(i)
                     self.tracks[i].skipped_frames += 1
@@ -147,20 +153,9 @@ class Tracker(object):
             if (self.tracks[i].skipped_frames > self.max_frames_to_skip):
                 del_tracks.append(i)
         if len(del_tracks) > 0:  # only when skipped frame exceeds max
-            print("Need_to_del ", len(del_tracks), " tracks.")
             for i, index in enumerate(del_tracks):
-                if index < len(self.tracks):
-                    # print("Deleted a track")
-                    # del self.tracks[index]
-                    # del assignment[index]
-                    #
-                    # for j in range(i, len(del_tracks)):
-                    #     del_tracks[j] -= 1
-                    pass
-                else:
-                    print("ERROR: id is greater than length of tracks 1")
-                    pass
-            print("Before tracks len ", len(self.tracks))
+                if index >= len(self.tracks):
+                    print("Id is greater than length of tracks 1")
             copy_tracks = []
             for i in range(len(self.tracks)):
                 if i not in del_tracks:
@@ -214,8 +209,3 @@ class Tracker(object):
             # add posiition to history
 
             self.tracks[i].frame_count += 1
-
-        print("Assigments", len(assignment))
-        print("Un Assigned Decs", len(un_assigned_detects))
-        print("Un Assigned Tracks", len(un_assigned_tracks))
-        print("Tracks", len(self.tracks))

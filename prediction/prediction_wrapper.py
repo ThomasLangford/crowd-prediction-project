@@ -8,9 +8,9 @@ import numpy as np
 import pickle
 
 
-MODEL_PATH = "./uscs_peds_model/local_positional_one_lstm_one_dense_u-55.json"
+MODEL_PATH = "./uscs_peds_model/local_positional_one_lstm_one_dense_u-128.json"
 # WEIGHT_PATH = "./prediction_weights_2018-04-28.hdf5"
-WEIGHT_PATH = "./uscs_peds_model/prediction_weights_2018-04-28-bis.hdf5"
+WEIGHT_PATH = "./uscs_peds_model/prediction_weights_2018-04-30_13_24.hdf5"
 
 
 class PredictionWrapper:
@@ -19,7 +19,7 @@ class PredictionWrapper:
     def __init__(self):
         """Create a new wrapper instance."""
         # Create network.
-        optimizer = Adam(lr=0.001)
+        optimizer = Adam(lr=0.0001)
         loss = "mean_squared_error"
         with open(MODEL_PATH) as model_file:
             self.lstm = models.model_from_json(model_file.read())
