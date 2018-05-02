@@ -1,7 +1,20 @@
-"""Online display of tracks."""
+"""This is the main program coupling the seperate sections of the project.
+
+The script creates new instances of each portion of the LSTM prediction model
+to allow the model to be run in real time on an input sequence. It accesses
+the segmentation capabilities of the Mask R-CNN network through the
+MaskInterface class to generate contours. From the contours, the pedestrians
+can be tracked through the frame using the Kalman filter and associated
+tracking class. The prediction buffer for each is then filled and then passed
+to the prediction LSTM network, with the results of this network run back on
+the screen.
+
+To run this file, run the 'run_prediction.py' file in the parent directory.
+
+"""
 
 from segmentation.segmentation import MaskInterface
-from karlman_filter.tracker_old import Tracker
+from karlman_filter.tracker import Tracker
 import numpy as np
 import pickle
 import os
@@ -12,16 +25,31 @@ from prediction.prediction_wrapper import PredictionWrapper
 
 
 def plot_tracks(track, image, threshold):
-    """Plot tracks to image."""
+    """Display the tracks of each detected pedestrian along any predictions.
+
+    This function takes a track object and displayes the path the pedestrian
+    has taken in previous frames and also the predicted future positions of
+    that pedestrian if there is one avalible. The color of the predicted path
+    depends on the degree at which the path is differs from the prediction at
+    the relevent time step.
+    Args:
+        track (Track): Track object containing information about the positions.
+        image (CV2.image): Image canvas object to be drawn onto.
+        threshold (float): The max distance between predicion and observation
+    Returns:
+        The updated image canvas.
+    """
     pred_color = (0, 204, 0)
     medium = (0, 128, 255)
     bad = (0, 0, 255)
-    actual = (255, 0, 0)
 
-    if len(track.center_history) != 0:
-        for point in track.center_history:
-            cv2.circle(image, (int(point[0][0]), int(point[0][1])), 1,
-                       track.color, -1)
+    if len(track.center_history) > 1:
+        for i in range(len(track.center_history) - 1):
+            point_1 = track.center_history[i][0]
+            point_1_tup = (int(point_1[0]), int(point_1[1]))
+            point_2 = track.center_history[i+1][0]
+            point_2_tup = (int(point_2[0]), int(point_2[1]))
+            cv2.line(image, point_1_tup, point_2_tup, track.color, 2)
 
     if len(track.prediction_list) != 0:
         point_one = track.center_history[-1][0]
@@ -34,25 +62,55 @@ def plot_tracks(track, image, threshold):
         elif distance > threshold:
             pred_color = medium
 
-        for point in track.prediction_list:
-            cv2.circle(image, (ceil(point[0]), ceil(point[1])), 1, pred_color,
-                       -1)
+        for i in range(len(track.prediction_list) - 1):
+            point_1 = track.prediction_list[i]
+            point_1_tup = (ceil(point_1[0]), ceil(point_1[1]))
+            point_2 = track.prediction_list[i+1]
+            point_2_tup = (ceil(point_2[0]), ceil(point_2[1]))
+            cv2.line(image, point_1_tup, point_2_tup, pred_color, 2)
 
     return image
 
 
 def reverse_transform(prediction_list, scalar):
-    """Undo multiple scaled transformations."""
+    """Inverse transform each element in a list.
+
+    Args:
+        prediction_list (array): List of predictions to be transformed.
+        scalar (Scikit Scalar): Trained MinMax scalar.
+    Returns:
+        The input list with the values inverted by the scalar.
+
+    """
     return [scalar.inverse_transform([x])[0] for x in prediction_list]
 
 
 def online(input_folder, interval, buffer_len, pred_len, threshold):
-    """Diplay predictions online."""
+    """Combine the project modules in an online demonstration.
+
+    The script creates new instances of each portion of the LSTM prediction
+    model to allow the model to be run in real time on an input sequence.
+    It accesses the segmentation capabilities of the Mask R-CNN network through
+    the MaskInterface class to generate contours. From the contours, the
+    pedestrians can be tracked through the frame using the Kalman filter and
+    associated tracking class. The prediction buffer for each is then filled
+    and then passed to the prediction LSTM network, with the results of this
+    network run back on the screen.
+    Args:
+        input_folder (String): Path to the image sequence folder.
+        interval (int): Gap between frames to be used for the prediciton.
+        buffer_len (int): Length of the input for the LSTM network.
+        pred_len (int): Number of predictions to be made.
+        threshold (float): When to change the prediction colour.
+    Returns:
+        None
+
+    """
     segmentor = MaskInterface()
     # tracker = Tracker(10, 0)
     tracker = Tracker(5, 2)
     predicter = PredictionWrapper()
-    with open("./uscs_peds_model/uscs_peds_scaler_20000.obj",
+    with open("./model/uscs_peds_scaler_20000.obj",
               "rb") as open_file:
         scalar = pickle.load(open_file)
 
@@ -69,12 +127,11 @@ def online(input_folder, interval, buffer_len, pred_len, threshold):
         for contour in contours:
             cnt = np.array(contour, dtype=np.int32)
             cnt = cnt.reshape((-1, 1, 2))
-            # cv2.polylines(img2, [cnt], True, (0,255,255))
             _, radius = cv2.minEnclosingCircle(cnt)
 
             if radius < 10 or radius > 30:
-            # if radius < 8 or radius > 30:
                 continue
+
             # Find center of mass of contours
             x_list = [vertex[0] for vertex in contour]
             y_list = [vertex[1] for vertex in contour]
@@ -84,7 +141,8 @@ def online(input_folder, interval, buffer_len, pred_len, threshold):
             centers.append([x, y])
 
         if (len(centers) > 0):
-            tracker.Update(centers)
+            tracker.update(centers)
+
         image = cv2.imread(image_path)
 
         for track in tracker.tracks:

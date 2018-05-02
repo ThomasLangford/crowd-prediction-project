@@ -14,11 +14,19 @@ OUTPUT_PATH = "C:/Users/Nedsh/Documents/CS/Project/DatasetLabelled/online_track_
 
 
 def tracking(image_path_list, abs_file_name, segmentor):
-    """Track multiple objects and save their positions to a numpy files.
+    """Segment each image in a series and apply the Kalman filter before saving.
 
-    args:
-        todo
-    returns
+    This function segments each image individually using the semgentation
+    wrapper class to abstract away the network functionality. A Kalman Filter
+    is used to extract the tracks from the series of input images. At the end
+    of the sequence, the tracks are saved as a npy file for later processing.
+    Args:
+        image_path_list (list): List of absolute paths to a sequence of images.
+        abs_file_name (String): Path to save the numpy file to.
+        segmentor (MaskInterface): Interface object for the Mask R-CNN model.
+    Returns:
+        None
+
     """
     tracker = Tracker(10, 0)
     count = 0
@@ -58,15 +66,29 @@ def tracking(image_path_list, abs_file_name, segmentor):
     np.save(abs_file_name, to_save)
 
 
-def track_all_in_folder(inputParentFolder, outputParentFolder):
-    """DocString."""
+def track_all_in_folder(input_parent_folder, output_folder):
+    """Segments all images within sub directories, apply a filter and save.
+
+    For each set of images in a subdirectory, this function applies the Mask
+    R-CNN segmentation model to each sequence  to generate a set of contours.
+    On each set of contours, a Kalman filter is applied in real time to build
+    up a information about paths taken by pedestirans in the frame. The track
+    files are saved individually per sequence as .npy files in the output
+    folder specidied.
+    Args:
+        input_parent_folder (String): Path to the parent folder.
+        output_folder (String): Absolute path to the output folder.
+    Returns:
+        None
+
+    """
     segmentor = MaskInterface()
-    for subdir in next(os.walk(inputParentFolder))[1]:
-        input_folder = inputParentFolder+"/"+subdir
+    for subdir in next(os.walk(input_parent_folder))[1]:
+        input_folder = input_parent_folder+"/"+subdir
         image_list = get_jpg_list(input_folder)
         abs_image_list = [os.path.join(input_folder, i) for i in image_list]
-        outputFolder = outputParentFolder
-        outputName = outputParentFolder+"/"+subdir+".npy"
+        outputFolder = output_folder
+        outputName = output_folder+"/"+subdir+".npy"
         if not os.path.isdir(outputFolder):
             os.makedirs(outputFolder)
         tracking(abs_image_list, outputName, segmentor)
